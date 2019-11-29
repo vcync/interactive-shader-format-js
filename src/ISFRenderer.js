@@ -149,12 +149,13 @@ ISFRenderer.prototype.pushTexture = function pushTexture(uniform) {
   }
 
   if (
+    uniform.value.constructor.name !== 'ImageBitmap' &&
     uniform.value.constructor.name !== 'OffscreenCanvas' &&
     (
       uniform.value.tagName !== 'CANVAS' &&
       !uniform.value.complete &&
       uniform.value.readyState !== 4)
-    ) {
+  ) {
     return;
   }
 
