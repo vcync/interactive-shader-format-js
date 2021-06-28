@@ -133,10 +133,7 @@ ISFParser.prototype.replaceSpecialFunctions = function replaceSpecialFunctions(s
   source = source.replace(regex, (fullMatch, innerMatch) => `texture2D(${innerMatch}, isf_FragNormCoord)`);
 
   // IMG_PIXEL
-  regex = /IMG_PIXEL\((.+?)\s?,\s?(.+?\)?\.?.*)\)/g;
-  source = source.replace(regex, (fullMatch, sampler, coord) => {
-    return `texture2D(${sampler}, (${coord}) / RENDERSIZE)`;
-  });
+  source = this.replaceImgPixel(source);
 
   // IMG_NORM_PIXEL
   regex = /IMG_NORM_PIXEL\((.+?)\s?,\s?(.+?\)?\.?.*)\)/g;
@@ -150,6 +147,19 @@ ISFParser.prototype.replaceSpecialFunctions = function replaceSpecialFunctions(s
     return `_${imgName}_imgSize`;
   });
   return source;
+};
+
+ISFParser.prototype.replaceImgPixel = function replaceImgPixel(source) {
+  const extractImgPixelRegex = /IMG_PIXEL\((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))*\)/g;
+  const extractOnlySamplerCoordsRegex = /IMG_PIXEL\((.+?)\s?,\s?(.+?\)?\.?.*)\)/g;
+
+  // Find the whole string
+  return source.replace(extractImgPixelRegex, (fullMatch) => {
+    // Extract sampler and coord
+    return fullMatch.replace(extractOnlySamplerCoordsRegex, (coordMatch, sampler2, coord2) => {
+      return `texture2D(${sampler2}, (${coord2}) / RENDERSIZE)`;
+    });
+  });
 };
 
 ISFParser.prototype.buildVertexShader = function buildVertexShader() {
