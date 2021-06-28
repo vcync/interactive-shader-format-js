@@ -43,8 +43,7 @@ ISFGLProgram.prototype.createShader = function createShader(src, type) {
   const compiled = this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS);
   if (!compiled) {
     const lastError = this.gl.getShaderInfoLog(shader);
-    console.log('Error Compiling Shader ', lastError);
-    throw new Error({
+    throw ({
       message: lastError,
       type: 'shader',
     });
@@ -60,8 +59,7 @@ ISFGLProgram.prototype.createProgram = function createProgram(vShader, fShader) 
   const linked = this.gl.getProgramParameter(program, this.gl.LINK_STATUS);
   if (!linked) {
     const lastError = this.gl.getProgramInfoLog(program);
-    console.log('Error in program linking', lastError);
-    throw new Error({
+    throw ({
       message: lastError,
       type: 'program',
     });
