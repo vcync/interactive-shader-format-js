@@ -6,6 +6,7 @@ import ISFBuffer from './ISFBuffer';
 import ISFParser from './ISFParser';
 import ISFTexture from './ISFTexture';
 import LineMapper from './ISFLineMapper';
+import { correctedLineErrors } from './ISFLineMapper';
 
 const mathJsEval = math.eval;
 
@@ -51,6 +52,7 @@ ISFRenderer.prototype.sourceChanged = function sourceChanged(fragmentShader, ver
     this.valid = false;
     this.error = e;
     this.errorLine = LineMapper(e, this.fragmentShader, this.model.rawFragmentShader);
+    this.errorWithCorrectedLines = correctedLineErrors(e.message, this.fragmentShader, this.model.rawFragmentShader);
   }
 };
 
