@@ -7,7 +7,8 @@
   "INPUTS" : [
     {
       "NAME" : "waveImage",
-      "TYPE" : "audio"
+      "TYPE" : "audio",
+      "MAX": 32
     },
     {
       "NAME" : "waveSize",

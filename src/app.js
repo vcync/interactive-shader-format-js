@@ -74,6 +74,8 @@ async function createRendering(fsFilename, vsFilename, label) {
   renderers.push(await createRendering("tapestryfract.fs"));
   renderers.push(await createRendering("audio.fs"));
   renderers.push(await createRendering("audio-fft.fs"));
+  renderers.push(await createRendering("audio-32-samples.fs"));
+  renderers.push(await createRendering("audio-fft-32-samples.fs"));
 
   webcamButton.addEventListener("click", async () => {
     video = document.createElement("video");

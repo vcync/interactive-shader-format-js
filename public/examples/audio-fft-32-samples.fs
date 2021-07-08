@@ -8,7 +8,8 @@
   "INPUTS": [
     {
       "NAME": "fftImage",
-      "TYPE": "audioFFT"
+      "TYPE": "audioFFT",
+      "MAX": 32
     },
     {
       "NAME": "strokeSize",

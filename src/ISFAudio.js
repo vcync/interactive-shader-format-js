@@ -26,6 +26,21 @@ function updateAudioTextureInstances(updateFrequency, updateTimeDomain) {
   });
 }
 
+function decimateArray(array, samples) {
+  if (array.length === samples) {
+    return array;
+  }
+
+  const decimated = [];
+  const step = array.length / samples;
+
+  for (let i = 0; i < samples; i += 1) {
+    decimated[i] = array[Math.floor(i * step)];
+  }
+
+  return decimated;
+}
+
 // eslint-disable-next-line no-restricted-globals
 const couldBeWorker = self.document === undefined;
 
@@ -91,10 +106,10 @@ ISFAudio.prototype.setUpWebAudio = async function setUpWebAudio({
   // this brings the fft analysis in-line to what we'd expect from other non-web applications
   // not sure if this is opinionated or not, just trying to match the output from ISFEditor for mac
   // and a few other apps
-  this.analyserNodeL.maxDecibels = 0;
   this.analyserNodeL.minDecibels = -61;
-  this.analyserNodeR.maxDecibels = 0;
+  this.analyserNodeL.maxDecibels = 0;
   this.analyserNodeR.minDecibels = -61;
+  this.analyserNodeR.maxDecibels = 0;
 
   let defaultDevice;
 
@@ -180,7 +195,7 @@ ISFAudio.prototype.destroy = function destroy() {
 
 function ISFAudioTexture(isfAudioInstance, type = "audioFFT", maxSamples) {
   this.isfAudioInstance = isfAudioInstance;
-  this.maxSamples = maxSamples | this.isfAudioInstance.fftSize;
+  this.maxSamples = maxSamples || this.isfAudioInstance.fftSize;
   this.type = type;
 
   const { fftSize, halfFftSize } = isfAudioInstance;
@@ -212,30 +227,38 @@ ISFAudioTexture.prototype.update = function update() {
 
   if (this.type === "audioFFT") {
     // Construct FFT image data
-    const frequencyImageData = [
-      ...frequencyValuesR,
-      ...frequencyValuesL,
-    ].reduce((arr, value) => {
+    const sampledValues = [
+      ...decimateArray(frequencyValuesR, this.maxSamples),
+      ...decimateArray(frequencyValuesL, this.maxSamples),
+    ];
+
+    const frequencyImageData = sampledValues.reduce((arr, value) => {
       arr.push(value, value, value, 255);
       return arr;
     }, []);
 
     imageDataUInt8 = Uint8ClampedArray.from(frequencyImageData);
-    imageDataLength = frequencyValuesL.length;
+    imageDataLength = sampledValues.length / 2;
   }
 
   if (this.type === "audio") {
     // Construct waveform image data
-    const timeDomainImageData = [
-      ...timeDomainValuesR,
-      ...timeDomainValuesL,
-    ].reduce((arr, value) => {
+    const sampledValues = [
+      ...decimateArray(timeDomainValuesR, this.maxSamples),
+      ...decimateArray(timeDomainValuesL, this.maxSamples),
+    ];
+
+    const timeDomainImageData = sampledValues.reduce((arr, value) => {
       arr.push(value, value, value, 255);
       return arr;
     }, []);
 
     imageDataUInt8 = Uint8ClampedArray.from(timeDomainImageData);
-    imageDataLength = timeDomainValuesL.length;
+    imageDataLength = sampledValues.length / 2;
+  }
+
+  if (this.context.canvas.width !== imageDataLength) {
+    this.context.canvas.width = imageDataLength;
   }
 
   this.context.putImageData(
