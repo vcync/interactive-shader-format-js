@@ -1,7 +1,9 @@
 function getMainLine(src) {
-  const lines = src.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].indexOf('main()') !== -1) return i;
+  const lines = src.split("\n");
+  for (let i = 0; i < lines.length; i += 1) {
+    if (lines[i].indexOf("main()") !== -1) {
+      return i;
+    }
   }
   return -1;
 }
@@ -27,7 +29,9 @@ export default function ISFLineMapper(error, glsl, isf) {
  */
 export function correctedLineErrors(error, glsl, isf) {
   const offset = getMainLine(isf) - getMainLine(glsl);
-  return error.replace(/(?:WARNING|ERROR): \d+:(\d+): .*/g, (match, isfLinenumber) => {
-    return match.replace(isfLinenumber, parseInt(isfLinenumber, 10) + offset);
-  });
+  return error.replace(
+    /(?:WARNING|ERROR): \d+:(\d+): .*/g,
+    (match, isfLinenumber) =>
+      match.replace(isfLinenumber, parseInt(isfLinenumber, 10) + offset)
+  );
 }

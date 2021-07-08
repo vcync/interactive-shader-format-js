@@ -16,14 +16,26 @@ ISFGLProgram.prototype.getUniformLocation = function getUniformLocation(name) {
 
 ISFGLProgram.prototype.bindVertices = function bindVertices() {
   this.use();
-  const positionLocation = this.gl.getAttribLocation(this.program, 'isf_position');
+  const positionLocation = this.gl.getAttribLocation(
+    this.program,
+    "isf_position"
+  );
   this.buffer = this.gl.createBuffer();
   this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
-  const vertexArray = new Float32Array(
-    [-1.0, -1.0, 1.0,
-      -1.0, -1.0, 1.0,
-      -1.0, 1.0, 1.0,
-      -1.0, 1.0, 1.0]);
+  const vertexArray = new Float32Array([
+    -1.0,
+    -1.0,
+    1.0,
+    -1.0,
+    -1.0,
+    1.0,
+    -1.0,
+    1.0,
+    1.0,
+    -1.0,
+    1.0,
+    1.0,
+  ]);
   this.gl.bufferData(this.gl.ARRAY_BUFFER, vertexArray, this.gl.STATIC_DRAW);
   this.gl.enableVertexAttribArray(positionLocation);
   this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
@@ -43,15 +55,18 @@ ISFGLProgram.prototype.createShader = function createShader(src, type) {
   const compiled = this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS);
   if (!compiled) {
     const lastError = this.gl.getShaderInfoLog(shader);
-    throw ({
+    throw new Error({
       message: lastError,
-      type: 'shader',
+      type: "shader",
     });
   }
   return shader;
 };
 
-ISFGLProgram.prototype.createProgram = function createProgram(vShader, fShader) {
+ISFGLProgram.prototype.createProgram = function createProgram(
+  vShader,
+  fShader
+) {
   const program = this.gl.createProgram();
   this.gl.attachShader(program, vShader);
   this.gl.attachShader(program, fShader);
@@ -59,13 +74,12 @@ ISFGLProgram.prototype.createProgram = function createProgram(vShader, fShader) 
   const linked = this.gl.getProgramParameter(program, this.gl.LINK_STATUS);
   if (!linked) {
     const lastError = this.gl.getProgramInfoLog(program);
-    throw ({
+    throw new Error({
       message: lastError,
-      type: 'program',
+      type: "program",
     });
   }
   return program;
 };
-
 
 export default ISFGLProgram;

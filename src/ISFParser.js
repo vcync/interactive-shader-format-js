@@ -1,4 +1,4 @@
-import MetadataExtractor from './MetadataExtractor';
+import MetadataExtractor from "./MetadataExtractor";
 /*
 
   Uniforms you will need to set, in addition to any inputs specified are
@@ -10,13 +10,15 @@ import MetadataExtractor from './MetadataExtractor';
 */
 
 const typeUniformMap = {
-  float: 'float',
-  image: 'sampler2D',
-  bool: 'bool',
-  event: 'bool',
-  long: 'int',
-  color: 'vec4',
-  point2D: 'vec2',
+  float: "float",
+  image: "sampler2D",
+  audio: "sampler2D",
+  audioFFT: "sampler2D",
+  bool: "bool",
+  event: "bool",
+  long: "int",
+  color: "vec4",
+  point2D: "vec2",
 };
 
 const ISFParser = function ISFParser() {};
@@ -34,13 +36,15 @@ ISFParser.prototype.parse = function parse(rawFragmentShader, rawVertexShader) {
     this.credit = metadata.CREDIT;
     this.categories = metadata.CATEGORIES;
     this.inputs = metadata.INPUTS;
-    this.imports = (metadata.IMPORTED || {});
+    this.imports = metadata.IMPORTED || {};
     this.description = metadata.DESCRIPTION;
 
     const passesArray = metadata.PASSES || [{}];
     this.passes = this.parsePasses(passesArray);
     const endOfMetadata =
-      this.rawFragmentShader.indexOf(metadataString) + metadataString.length + 2;
+      this.rawFragmentShader.indexOf(metadataString) +
+      metadataString.length +
+      2;
     this.rawFragmentMain = this.rawFragmentShader.substring(endOfMetadata);
     this.generateShaders();
     this.inferFilterType();
@@ -50,20 +54,22 @@ ISFParser.prototype.parse = function parse(rawFragmentShader, rawVertexShader) {
     this.error = e;
     this.inputs = [];
     this.categories = [];
-    this.credit = '';
+    this.credit = "";
     this.errorLine = e.lineNumber;
   }
 };
 
 ISFParser.prototype.parsePasses = function parsePasses(passesArray) {
   const passes = [];
-  for (let i = 0; i < passesArray.length; ++i) {
+  for (let i = 0; i < passesArray.length; i += 1) {
     const passDefinition = passesArray[i];
-    const pass = { };
-    if (passDefinition.TARGET) pass.target = passDefinition.TARGET;
+    const pass = {};
+    if (passDefinition.TARGET) {
+      pass.target = passDefinition.TARGET;
+    }
     pass.persistent = !!passDefinition.PERSISTENT;
-    pass.width = passDefinition.WIDTH || '$WIDTH';
-    pass.height = passDefinition.HEIGHT || '$HEIGHT';
+    pass.width = passDefinition.WIDTH || "$WIDTH";
+    pass.height = passDefinition.HEIGHT || "$HEIGHT";
     pass.float = !!passDefinition.FLOAT;
     passes.push(pass);
   }
@@ -71,22 +77,20 @@ ISFParser.prototype.parsePasses = function parsePasses(passesArray) {
 };
 
 ISFParser.prototype.generateShaders = function generateShaders() {
-  this.uniformDefs = '';
-  for (let i = 0; i < this.inputs.length; ++i) {
+  this.uniformDefs = "";
+  for (let i = 0; i < this.inputs.length; i += 1) {
     this.addUniform(this.inputs[i]);
   }
 
-  for (let i = 0; i < this.passes.length; ++i) {
+  for (let i = 0; i < this.passes.length; i += 1) {
     if (this.passes[i].target) {
-      this.addUniform({ NAME: this.passes[i].target, TYPE: 'image' });
+      this.addUniform({ NAME: this.passes[i].target, TYPE: "image" });
     }
   }
 
-  for (const k in this.imports) {
-    if ({}.hasOwnProperty.call(this.imports, k)) {
-      this.addUniform({ NAME: k, TYPE: 'image' });
-    }
-  }
+  Object.keys(this.imports).forEach((key) => {
+    this.addUniform({ NAME: key, TYPE: "image" });
+  });
 
   this.fragmentShader = this.buildFragmentShader();
   this.vertexShader = this.buildVertexShader();
@@ -95,7 +99,7 @@ ISFParser.prototype.generateShaders = function generateShaders() {
 ISFParser.prototype.addUniform = function addUniform(input) {
   const type = this.inputToType(input.TYPE);
   this.addUniformLine(`uniform ${type} ${input.NAME};`);
-  if (type === 'sampler2D') {
+  if (type === "sampler2D") {
     this.addUniformLine(this.samplerUniforms(input));
   }
 };
@@ -106,122 +110,159 @@ ISFParser.prototype.addUniformLine = function addUniformLine(line) {
 
 ISFParser.prototype.samplerUniforms = function samplerUniforms(input) {
   const name = input.NAME;
-  let lines = '';
+  let lines = "";
   lines += `uniform vec4 _${name}_imgRect;\n`;
   lines += `uniform vec2 _${name}_imgSize;\n`;
   lines += `uniform bool _${name}_flip;\n`;
   lines += `varying vec2 _${name}_normTexCoord;\n`;
   lines += `varying vec2 _${name}_texCoord;\n`;
-  lines += '\n';
+  lines += "\n";
   return lines;
 };
 
 ISFParser.prototype.buildFragmentShader = function buildFragmentShader() {
   const main = this.replaceSpecialFunctions(this.rawFragmentMain);
-  return ISFParser.fragmentShaderSkeleton.replace('[[uniforms]]', this.uniformDefs).replace('[[main]]', main);
+  return ISFParser.fragmentShaderSkeleton
+    .replace("[[uniforms]]", this.uniformDefs)
+    .replace("[[main]]", main);
 };
 
-ISFParser.prototype.replaceSpecialFunctions = function replaceSpecialFunctions(source) {
+ISFParser.prototype.replaceSpecialFunctions = function replaceSpecialFunctions(
+  source
+) {
   let regex;
+  let sourceOut = "";
 
   // IMG_THIS_PIXEL
   regex = /IMG_THIS_PIXEL\((.+?)\)/g;
-  source = source.replace(regex, (fullMatch, innerMatch) => `texture2D(${innerMatch}, isf_FragNormCoord)`);
+  sourceOut = source.replace(
+    regex,
+    (fullMatch, innerMatch) => `texture2D(${innerMatch}, isf_FragNormCoord)`
+  );
 
   // IMG_THIS_NORM_PIXEL
   regex = /IMG_THIS_NORM_PIXEL\((.+?)\)/g;
-  source = source.replace(regex, (fullMatch, innerMatch) => `texture2D(${innerMatch}, isf_FragNormCoord)`);
+  sourceOut = sourceOut.replace(
+    regex,
+    (fullMatch, innerMatch) => `texture2D(${innerMatch}, isf_FragNormCoord)`
+  );
 
   // IMG_PIXEL
-  source = this.replaceImgPixel(source);
+  sourceOut = this.replaceImgPixel(sourceOut);
 
   // IMG_NORM_PIXEL
-  source = this.replaceImgNormPixel(source);
+  sourceOut = this.replaceImgNormPixel(sourceOut);
 
   // IMG_SIZE
   regex = /IMG_SIZE\((.+?)\)/g;
-  source = source.replace(regex, (fullMatch, imgName) => {
-    return `_${imgName}_imgSize`;
-  });
-  return source;
+  sourceOut = sourceOut.replace(
+    regex,
+    (fullMatch, imgName) => `_${imgName}_imgSize`
+  );
+
+  return sourceOut;
 };
 
 ISFParser.prototype.replaceImgPixel = function replaceImgPixel(source) {
   const extractRegex = /IMG_PIXEL\((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))*\)/g;
+  // eslint-disable-next-line max-len
   const extractOnlySamplerCoordsRegex = /IMG_PIXEL\((.+?)\s?,\s?(.+?\)?\.?.*)\)/g;
 
   // Find the whole string with matching parenthesis
-  return source.replace(extractRegex, (fullMatch) => {
+  return source.replace(extractRegex, (fullMatch) =>
     // Extract sampler and coord
-    return fullMatch.replace(extractOnlySamplerCoordsRegex, (coordMatch, sampler, coord) => {
-      return `texture2D(${sampler}, (${coord}) / RENDERSIZE)`;
-    });
-  });
+    fullMatch.replace(
+      extractOnlySamplerCoordsRegex,
+      (coordMatch, sampler, coord) =>
+        `texture2D(${sampler}, (${coord}) / RENDERSIZE)`
+    )
+  );
 };
 
 ISFParser.prototype.replaceImgNormPixel = function replaceImgNormPixel(source) {
+  // eslint-disable-next-line max-len
   const extractRegex = /IMG_NORM_PIXEL\((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))*\)/g;
+  // eslint-disable-next-line max-len
   const extractOnlySamplerCoordsRegex = /IMG_NORM_PIXEL\((.+?)\s?,\s?(.+?\)?\.?.*)\)/g;
 
   // Find the whole string with matching parenthesis
-  return source.replace(extractRegex, (fullMatch) => {
+  return source.replace(extractRegex, (fullMatch) =>
     // Extract sampler and coord
-    return fullMatch.replace(extractOnlySamplerCoordsRegex, (coordMatch, sampler, coord) => {
-      return `VVSAMPLER_2DBYNORM(${sampler}, _${sampler}_imgRect, _${sampler}_imgSize, _${sampler}_flip, ${coord})`;
-    });
-  });
+    fullMatch.replace(
+      extractOnlySamplerCoordsRegex,
+      (coordMatch, sampler, coord) =>
+        `VVSAMPLER_2DBYNORM(${sampler}, _${sampler}_imgRect, _${sampler}_imgSize, _${sampler}_flip, ${coord})`
+    )
+  );
 };
 
 ISFParser.prototype.buildVertexShader = function buildVertexShader() {
-  let functionLines = '\n';
-  for (let i = 0; i < this.inputs.length; ++i) {
+  let functionLines = "\n";
+  for (let i = 0; i < this.inputs.length; i += 1) {
     const input = this.inputs[i];
-    if (input.TYPE === 'image') {
+    if (input.TYPE === "image") {
       functionLines += `${this.texCoordFunctions(input)}\n`;
     }
   }
-  return ISFParser.vertexShaderSkeleton.replace('[[functions]]', functionLines).replace('[[uniforms]]', this.uniformDefs).replace('[[main]]', this.rawVertexShader);
+  return ISFParser.vertexShaderSkeleton
+    .replace("[[functions]]", functionLines)
+    .replace("[[uniforms]]", this.uniformDefs)
+    .replace("[[main]]", this.rawVertexShader);
 };
 
 ISFParser.prototype.texCoordFunctions = function texCoordFunctions(input) {
   const name = input.NAME;
   return [
-    '_[[name]]_texCoord =',
-    '    vec2(((isf_fragCoord.x / _[[name]]_imgSize.x * _[[name]]_imgRect.z) + _[[name]]_imgRect.x), ',
-    '          (isf_fragCoord.y / _[[name]]_imgSize.y * _[[name]]_imgRect.w) + _[[name]]_imgRect.y);',
-    '',
-    '_[[name]]_normTexCoord =',
-    '  vec2((((isf_FragNormCoord.x * _[[name]]_imgSize.x) / _[[name]]_imgSize.x * _[[name]]_imgRect.z) + _[[name]]_imgRect.x),',
-    '          ((isf_FragNormCoord.y * _[[name]]_imgSize.y) / _[[name]]_imgSize.y * _[[name]]_imgRect.w) + _[[name]]_imgRect.y);',
-  ].join('\n').replace(/\[\[name\]\]/g, name);
+    "_[[name]]_texCoord =",
+    "    vec2(((isf_fragCoord.x / _[[name]]_imgSize.x * _[[name]]_imgRect.z) + _[[name]]_imgRect.x), ",
+    "          (isf_fragCoord.y / _[[name]]_imgSize.y * _[[name]]_imgRect.w) + _[[name]]_imgRect.y);",
+    "",
+    "_[[name]]_normTexCoord =",
+    "  vec2((((isf_FragNormCoord.x * _[[name]]_imgSize.x) / _[[name]]_imgSize.x * _[[name]]_imgRect.z) + _[[name]]_imgRect.x),",
+    "          ((isf_FragNormCoord.y * _[[name]]_imgSize.y) / _[[name]]_imgSize.y * _[[name]]_imgRect.w) + _[[name]]_imgRect.y);",
+  ]
+    .join("\n")
+    .replace(/\[\[name\]\]/g, name);
 };
 
 ISFParser.prototype.inferFilterType = function inferFilterType() {
   function any(arr, test) {
     return arr.filter(test).length > 0;
   }
-  const isFilter = any(this.inputs, input => input.TYPE === 'image' && input.NAME === 'inputImage');
+  const isFilter = any(
+    this.inputs,
+    (input) => input.TYPE === "image" && input.NAME === "inputImage"
+  );
   const isTransition =
-    any(this.inputs, input => input.TYPE === 'image' && input.NAME === 'startImage')
-    &&
-    any(this.inputs, input => input.TYPE === 'image' && input.NAME === 'endImage')
-    &&
-    any(this.inputs, input => input.TYPE === 'float' && input.NAME === 'progress');
+    any(
+      this.inputs,
+      (input) => input.TYPE === "image" && input.NAME === "startImage"
+    ) &&
+    any(
+      this.inputs,
+      (input) => input.TYPE === "image" && input.NAME === "endImage"
+    ) &&
+    any(
+      this.inputs,
+      (input) => input.TYPE === "float" && input.NAME === "progress"
+    );
   if (isFilter) {
-    this.type = 'filter';
+    this.type = "filter";
   } else if (isTransition) {
-    this.type = 'transition';
+    this.type = "transition";
   } else {
-    this.type = 'generator';
+    this.type = "generator";
   }
 };
 
 ISFParser.prototype.inferISFVersion = function inferISFVersion() {
   let v = 2;
-  if (this.metadata.PERSISTENT_BUFFERS ||
-      this.rawFragmentShader.indexOf('vv_FragNormCoord') !== -1 ||
-      this.rawVertexShader.indexOf('vv_vertShaderInit') !== -1 ||
-      this.rawVertexShader.indexOf('vv_FragNormCoord') !== -1) {
+  if (
+    this.metadata.PERSISTENT_BUFFERS ||
+    this.rawFragmentShader.indexOf("vv_FragNormCoord") !== -1 ||
+    this.rawVertexShader.indexOf("vv_vertShaderInit") !== -1 ||
+    this.rawVertexShader.indexOf("vv_FragNormCoord") !== -1
+  ) {
     v = 1;
   }
   return v;
@@ -229,7 +270,9 @@ ISFParser.prototype.inferISFVersion = function inferISFVersion() {
 
 ISFParser.prototype.inputToType = function inputToType(inputType) {
   const type = typeUniformMap[inputType];
-  if (!type) throw new Error(`Unknown input type [${inputType}]`);
+  if (!type) {
+    throw new Error(`Unknown input type [${inputType}]`);
+  }
   return type;
 };
 

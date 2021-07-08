@@ -1,8 +1,6 @@
-/* globals json_parse */
+import jsonParse from "../vendor/json_parse";
 
-import jsonParse from '../vendor/json_parse';
-
-const METADATA_ERROR_PREFIX = 'Something is wrong with your ISF metadata';
+const METADATA_ERROR_PREFIX = "Something is wrong with your ISF metadata";
 
 export default function MetadataExtractor(rawFragmentShader) {
   // First pull out the comment JSON to get the metadata.
@@ -11,7 +9,7 @@ export default function MetadataExtractor(rawFragmentShader) {
   const results = regex.exec(rawFragmentShader);
 
   if (!results) {
-    throw new Error('There is no metadata here.');
+    throw new Error("There is no metadata here.");
   }
 
   let metadataString = results[0];
@@ -21,9 +19,9 @@ export default function MetadataExtractor(rawFragmentShader) {
     metadata = jsonParse(metadataString);
   } catch (e) {
     const loc = e.at;
-    const message = (e.message || 'Invalid JSON');
+    const message = e.message || "Invalid JSON";
     if (loc) {
-      const lines = (metadataString || '')
+      const lines = (metadataString || "")
         .substring(0, loc)
         .split(/\r\n|\r|\n/);
       const lineNumber = lines.length;
@@ -38,12 +36,12 @@ export default function MetadataExtractor(rawFragmentShader) {
     throw new Error(`${METADATA_ERROR_PREFIX}: ${message}`);
   }
 
-  const startIndex = rawFragmentShader.indexOf('/*');
-  const endIndex = rawFragmentShader.indexOf('*/');
+  const startIndex = rawFragmentShader.indexOf("/*");
+  const endIndex = rawFragmentShader.indexOf("*/");
   return {
     objectValue: metadata,
     stringValue: metadataString,
     startIndex,
     endIndex,
   };
-};
+}

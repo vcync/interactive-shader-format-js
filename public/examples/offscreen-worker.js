@@ -1,5 +1,5 @@
 // Import the ISF library
-importScripts('/dist/build-worker.js');
+importScripts("/dist/build-worker.js");
 
 const ISFRenderer = self.interactiveShaderFormat.Renderer;
 
@@ -8,13 +8,12 @@ let raf = null;
 
 // OffscreenCanvas is attached to the WorkerGlobalScope
 const mainCanvas = new OffscreenCanvas(256, 256);
-const mainContext = mainCanvas.getContext('webgl');
+const mainContext = mainCanvas.getContext("webgl");
 
 const textCanvas = new OffscreenCanvas(256, 256);
-const textContext = textCanvas.getContext('2d');
+const textContext = textCanvas.getContext("2d");
 
-
-const text = 'ISF OffscreenCanvas 🙌';
+const text = "ISF OffscreenCanvas 🙌";
 
 let resizeQueued = false;
 const size = {
@@ -37,15 +36,19 @@ const frame = (delta) => {
   // Draw some text to test with
   const { width, height } = textCanvas;
 
-  textContext.font = '30pt sans-serif';
-  textContext.textAlign = 'center';
-  textContext.fillStyle = 'black';
+  textContext.font = "30pt sans-serif";
+  textContext.textAlign = "center";
+  textContext.fillStyle = "black";
   textContext.fillRect(0, 0, width, height);
   textContext.fillStyle = `hsl(${delta / 40}, 80%, 60%)`;
   textContext.fillText(
     text,
-    Math.round((width / 2) + ((10 * Math.sin(delta / 400)) * (3 * -Math.sin(delta / 380)))),
-    Math.round((height / 2) + ((18 * -Math.cos(delta / 400)) * (4 * Math.cos(delta / 480)))),
+    Math.round(
+      width / 2 + 10 * Math.sin(delta / 400) * (3 * -Math.sin(delta / 380))
+    ),
+    Math.round(
+      height / 2 + 18 * -Math.cos(delta / 400) * (4 * Math.cos(delta / 480))
+    )
   );
 
   renderers.forEach((rendererObj) => {
@@ -56,7 +59,7 @@ const frame = (delta) => {
       canvas.height = size.height;
     }
 
-    renderer.setValue('inputImage', textCanvas);
+    renderer.setValue("inputImage", textCanvas);
     renderer.draw(mainCanvas);
 
     context.drawImage(mainCanvas, 0, 0);
@@ -65,7 +68,7 @@ const frame = (delta) => {
   if (resizeQueued) {
     resizeQueued = false;
   }
-}
+};
 
 raf = requestAnimationFrame(frame);
 
@@ -74,9 +77,9 @@ onmessage = (e) => {
   const { message, payload } = data;
 
   switch (message) {
-    case 'createRendering':
+    case "createRendering":
       const { canvas, vertexShader, fragmentShader } = payload;
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
 
       const renderer = new ISFRenderer(mainContext);
       renderer.loadSource(fragmentShader, vertexShader);
@@ -84,11 +87,11 @@ onmessage = (e) => {
       renderers.push({
         renderer,
         canvas,
-        context
+        context,
       });
       break;
 
-    case 'setSize':
+    case "setSize":
       const { width, height } = payload;
 
       size.width = width;

@@ -1,4 +1,4 @@
-import ISFTexture from './ISFTexture';
+import ISFTexture from "./ISFTexture";
 
 function ISFBuffer(pass, contextState) {
   this.contextState = contextState;
@@ -20,7 +20,7 @@ ISFBuffer.prototype.setSize = function setSize(w, h) {
   if (this.width !== w || this.height !== h) {
     this.width = w;
     this.height = h;
-    for (let i = 0; i < this.textures.length; i++) {
+    for (let i = 0; i < this.textures.length; i += 1) {
       const texture = this.textures[i];
       texture.setSize(w, h);
     }
@@ -46,7 +46,7 @@ ISFBuffer.prototype.flip = function flip() {
 };
 
 ISFBuffer.prototype.destroy = function destroy() {
-  for (let i = 0; i < this.textures.length; i++) {
+  for (let i = 0; i < this.textures.length; i += 1) {
     const texture = this.textures[i];
     texture.destroy();
   }
